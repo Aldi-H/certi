@@ -80,3 +80,15 @@ certi/
   3. Converts the canvas to an image/PDF.
   4. Pushes that PDF into a `jszip` bundle.
   5. Triggers a single `.zip` file download to the user using `file-saver`.
+
+### Phase 6: Bulk Email Distribution & Metadata Matching (New Feature)
+
+- **The Challenge:** After certificates are signed by external/government applications, the files are often renamed, making it difficult to match them back to the correct person for emailing.
+- **The Solution (Invisible Metadata):** During **Phase 5**, the generator will inject the recipient's unique email address into the hidden PDF `Keywords` metadata using `pdf-lib`. This leaves the visual certificate completely untouched.
+- **The Feature:**
+  1. Create a new "Email Distribution" tab.
+  2. The user can customize an **Email Message Template** (e.g., "Hello {{Name}}, please find your signed certificate attached...").
+  3. The user uploads the returned `.zip` file of signed PDFs alongside the original Excel data.
+  4. The app unzips the file, reads the hidden `Keywords` metadata from each PDF to extract the email address, completely ignoring the filenames.
+  5. It matches the email to the exact row in the Excel data.
+  6. The app uses an API route to bulk email the correctly matched, signed PDF to each recipient using the customized message template!
