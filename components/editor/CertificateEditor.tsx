@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import {
   Upload,
   Settings,
@@ -8,8 +8,18 @@ import {
   FileImage,
   FileSpreadsheet,
   CheckCircle2,
+  Type,
+  Trash2,
 } from "lucide-react";
 import { useEditorState } from "@/hooks/useEditorState";
+import * as fabric from "fabric";
+import CanvasWorkspace from "./CanvasWorkspace";
+
+type ActiveTab = "upload" | "design" | "export";
+
+interface FabricObjectWithId extends fabric.FabricObject {
+  customId?: string;
+}
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -24,6 +34,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
 export default function CertificateEditor() {
+  const [activeTab, setActiveTab] = useState<ActiveTab>("upload");
+  const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
+  const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
+
   const {
     templateImage,
     excelData,
@@ -47,10 +61,66 @@ export default function CertificateEditor() {
     }
   };
 
+  const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
+    setFabricCanvas(canvas);
+
+    canvas.on("selection:created", (e) => {
+      const obj = e.selected?.[0] as FabricObjectWithId | undefined;
+      if (obj?.customId) setSelectedObjectId(obj.customId);
+    });
+
+    canvas.on("selection:updated", (e) => {
+      const obj = e.selected?.[0] as FabricObjectWithId | undefined;
+      if (obj?.customId) setSelectedObjectId(obj.customId);
+    });
+
+    canvas.on("selection:cleared", () => {
+      setSelectedObjectId(null);
+    });
+  }, []);
+
+  const addVariableToCanvas = (columnName: string) => {
+    if (!fabricCanvas) return;
+
+    const existing = fabricCanvas
+      .getObjects()
+      .find((obj) => (obj as FabricObjectWithId).customId === columnName);
+    if (existing) {
+      alert(`Variable {{${columnName}}} is already on the canvas.`);
+      return;
+    }
+
+    const text = new fabric.IText(`{{${columnName}}}`, {
+      left: fabricCanvas.width ? fabricCanvas.width / 2 - 50 : 100,
+      top: fabricCanvas.height ? fabricCanvas.height / 2 : 100,
+      fontFamily: "Arial",
+      fontSize: 40,
+      fill: "#000000",
+      textAlign: "center",
+      cursorColor: "#000000",
+    });
+
+    (text as FabricObjectWithId).customId = columnName;
+
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+    fabricCanvas.renderAll();
+  };
+
+  const deleteSelectedObject = () => {
+    if (!fabricCanvas) return;
+    const activeObjects = fabricCanvas.getActiveObjects();
+    if (activeObjects.length > 0) {
+      activeObjects.forEach((obj) => fabricCanvas.remove(obj));
+      fabricCanvas.discardActiveObject();
+      fabricCanvas.renderAll();
+    }
+  };
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       {/* Sidebar / Controls */}
-      <aside className="z-10 flex w-[350px] flex-col border-r border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <aside className="z-10 flex w-[350px] flex-shrink-0 flex-col border-r border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
         <div className="p-6">
           <h1 className="text-xl font-bold tracking-tight">Certificate Gen</h1>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
@@ -61,18 +131,27 @@ export default function CertificateEditor() {
         <Separator />
 
         <Tabs
-          defaultValue="upload"
-          className="flex h-full w-full flex-1 flex-col"
+          value={activeTab}
+          onValueChange={(val: string) => setActiveTab(val as ActiveTab)}
+          className="flex h-full min-h-0 w-full flex-1 flex-col"
         >
-          <div className="px-6 py-2">
+          <div className="flex-shrink-0 px-6 py-2">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="upload" className="flex items-center gap-1.5">
                 <Upload size={14} /> Data
               </TabsTrigger>
-              <TabsTrigger value="design" className="flex items-center gap-1.5">
+              <TabsTrigger
+                value="design"
+                className="flex items-center gap-1.5"
+                disabled={!templateImage || excelData.length === 0}
+              >
                 <Settings size={14} /> Design
               </TabsTrigger>
-              <TabsTrigger value="export" className="flex items-center gap-1.5">
+              <TabsTrigger
+                value="export"
+                className="flex items-center gap-1.5"
+                disabled={!templateImage || excelData.length === 0}
+              >
                 <Download size={14} /> Export
               </TabsTrigger>
             </TabsList>
@@ -169,17 +248,66 @@ export default function CertificateEditor() {
                   )}
                 </CardContent>
               </Card>
+
+              {templateImage && excelData.length > 0 && (
+                <Button
+                  className="w-full"
+                  onClick={() => setActiveTab("design")}
+                >
+                  Continue to Design
+                </Button>
+              )}
             </TabsContent>
 
             <TabsContent value="design" className="mt-0 space-y-4">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Design Workspace</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Add Variables</CardTitle>
                   <CardDescription>
-                    Upload your files first to start designing.
+                    Click a column to add it to the canvas.
                   </CardDescription>
                 </CardHeader>
+                <CardContent className="flex flex-col gap-2">
+                  {columns.map((col) => (
+                    <Button
+                      key={col}
+                      variant="outline"
+                      className="w-full justify-start font-mono text-xs"
+                      onClick={() => addVariableToCanvas(col)}
+                    >
+                      <Type className="mr-2 h-3 w-3" />
+                      {`{{${col}}}`}
+                    </Button>
+                  ))}
+                </CardContent>
               </Card>
+
+              {selectedObjectId && (
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between text-base">
+                      Edit Variable
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-red-500 hover:bg-red-50 hover:text-red-700"
+                        onClick={deleteSelectedObject}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </CardTitle>
+                    <CardDescription className="font-mono text-xs text-blue-600">{`{{${selectedObjectId}}}`}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-2 text-xs text-neutral-500">
+                      Styling tools (font size, color) will be added in Phase 4.
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      For now, drag to position and use bounding box to scale.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
             </TabsContent>
 
             <TabsContent value="export" className="mt-0 space-y-4">
@@ -194,7 +322,7 @@ export default function CertificateEditor() {
                 </CardHeader>
                 <CardContent>
                   <Button disabled className="w-full">
-                    Generate ZIP
+                    Generate ZIP (Phase 5)
                   </Button>
                 </CardContent>
               </Card>
@@ -206,14 +334,10 @@ export default function CertificateEditor() {
       {/* Main Workspace (Canvas Area) */}
       <main className="relative flex flex-1 items-center justify-center overflow-auto bg-neutral-100/50 p-8 dark:bg-neutral-950">
         {templateImage ? (
-          <div className="relative border border-neutral-200 shadow-xl dark:border-neutral-800">
-            {/* Displaying raw image for now, Phase 3 will replace this with Fabric.js Canvas */}
-            <img
-              src={templateImage}
-              alt="Template Preview"
-              className="max-h-[80vh] max-w-full object-contain"
-            />
-          </div>
+          <CanvasWorkspace
+            templateImage={templateImage}
+            onCanvasReady={handleCanvasReady}
+          />
         ) : (
           <div className="text-center">
             <Card className="flex h-[600px] w-[800px] items-center justify-center border-2 border-dashed bg-transparent shadow-none">

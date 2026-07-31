@@ -55,12 +55,12 @@ certi/
 - [x] Handle image file uploads to set as the certificate background.
 - [x] Create the `useEditorState` hook to store the parsed Excel data and the template image URL.
 
-### Phase 3: The Interactive Canvas
+### Phase 3: The Interactive Canvas (✅ Completed)
 
-- Integrate `fabric.js` into `CanvasWorkspace.tsx`.
-- Load the uploaded template image as the non-movable background of the canvas.
-- Display buttons for each detected Excel column header.
-- When a header is clicked, spawn a draggable, resizable text box on the canvas representing that variable.
+- [x] Integrate `fabric.js` into `CanvasWorkspace.tsx`.
+- [x] Load the uploaded template image as the non-movable background of the canvas.
+- [x] Display buttons for each detected Excel column header in the Design tab.
+- [x] When a header is clicked, spawn a draggable, resizable text box on the canvas representing that variable (e.g. `{{Name}}`).
 
 ### Phase 4: Toolbar & Styling
 
