@@ -11,11 +11,19 @@ import {
 } from "lucide-react";
 import { useEditorState } from "@/hooks/useEditorState";
 
-export default function CertificateEditor() {
-  const [activeTab, setActiveTab] = useState<"upload" | "design" | "export">(
-    "upload",
-  );
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
+export default function CertificateEditor() {
   const {
     templateImage,
     excelData,
@@ -40,174 +48,165 @@ export default function CertificateEditor() {
   };
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-neutral-50 text-neutral-900">
+    <div className="flex h-screen w-full overflow-hidden bg-neutral-50 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-50">
       {/* Sidebar / Controls */}
-      <aside className="z-10 flex w-80 flex-col border-r border-neutral-200 bg-white shadow-sm">
-        <div className="border-b border-neutral-200 p-6">
-          <h1 className="text-xl font-bold tracking-tight text-neutral-900">
-            Certificate Gen
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+      <aside className="z-10 flex w-[350px] flex-col border-r border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div className="p-6">
+          <h1 className="text-xl font-bold tracking-tight">Certificate Gen</h1>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
             Automate your certificates
           </p>
         </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex border-b border-neutral-200">
-          <button
-            onClick={() => setActiveTab("upload")}
-            className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-              activeTab === "upload"
-                ? "border-b-2 border-blue-600 bg-blue-50/50 text-blue-600"
-                : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
-            }`}
-          >
-            <Upload size={16} />
-            Data
-          </button>
-          <button
-            onClick={() => setActiveTab("design")}
-            className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-              activeTab === "design"
-                ? "border-b-2 border-blue-600 bg-blue-50/50 text-blue-600"
-                : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
-            }`}
-          >
-            <Settings size={16} />
-            Design
-          </button>
-          <button
-            onClick={() => setActiveTab("export")}
-            className={`flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors ${
-              activeTab === "export"
-                ? "border-b-2 border-blue-600 bg-blue-50/50 text-blue-600"
-                : "text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700"
-            }`}
-          >
-            <Download size={16} />
-            Export
-          </button>
-        </div>
+        <Separator />
 
-        {/* Sidebar Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {activeTab === "upload" && (
-            <div className="space-y-6">
-              {/* Template Image Upload */}
-              <div
+        <Tabs
+          defaultValue="upload"
+          className="flex h-full w-full flex-1 flex-col"
+        >
+          <div className="px-6 py-2">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="upload" className="flex items-center gap-1.5">
+                <Upload size={14} /> Data
+              </TabsTrigger>
+              <TabsTrigger value="design" className="flex items-center gap-1.5">
+                <Settings size={14} /> Design
+              </TabsTrigger>
+              <TabsTrigger value="export" className="flex items-center gap-1.5">
+                <Download size={14} /> Export
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            <TabsContent value="upload" className="mt-0 space-y-6">
+              {/* Template Image Upload Card */}
+              <Card
+                className={`cursor-pointer border-2 border-dashed transition-colors ${templateImage ? "border-green-400 bg-green-50/50 dark:bg-green-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-900/50"}`}
                 onClick={() => imageInputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors ${
-                  templateImage
-                    ? "border-green-400 bg-green-50"
-                    : "border-neutral-300 bg-neutral-50 hover:bg-neutral-100"
-                }`}
               >
-                <input
-                  type="file"
-                  accept="image/png, image/jpeg"
-                  className="hidden"
-                  ref={imageInputRef}
-                  onChange={onImageChange}
-                />
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    className="hidden"
+                    ref={imageInputRef}
+                    onChange={onImageChange}
+                  />
 
-                {templateImage ? (
-                  <>
-                    <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
-                    <h3 className="text-sm font-semibold text-green-700">
-                      Template Uploaded
-                    </h3>
-                    <p className="mt-1 text-xs text-green-600">
-                      Click to replace
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <FileImage className="mb-2 h-8 w-8 text-neutral-400" />
-                    <h3 className="text-sm font-semibold">Upload Template</h3>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      PNG, JPG format
-                    </p>
-                  </>
-                )}
-              </div>
+                  {templateImage ? (
+                    <>
+                      <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
+                      <h3 className="text-sm font-semibold text-green-700 dark:text-green-400">
+                        Template Uploaded
+                      </h3>
+                      <p className="mt-1 text-xs text-green-600 dark:text-green-500">
+                        Click to replace
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <FileImage className="mb-2 h-8 w-8 text-neutral-400" />
+                      <h3 className="text-sm font-semibold">Upload Template</h3>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        PNG, JPG format
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
 
-              {/* Excel Data Upload */}
-              <div
+              {/* Excel Data Upload Card */}
+              <Card
+                className={`cursor-pointer border-2 border-dashed transition-colors ${excelData.length > 0 ? "border-green-400 bg-green-50/50 dark:bg-green-950/20" : "hover:bg-neutral-50 dark:hover:bg-neutral-900/50"}`}
                 onClick={() => excelInputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors ${
-                  excelData.length > 0
-                    ? "border-green-400 bg-green-50"
-                    : "border-neutral-300 bg-neutral-50 hover:bg-neutral-100"
-                }`}
               >
-                <input
-                  type="file"
-                  accept=".xlsx, .csv"
-                  className="hidden"
-                  ref={excelInputRef}
-                  onChange={onExcelChange}
-                />
+                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                  <input
+                    type="file"
+                    accept=".xlsx, .csv"
+                    className="hidden"
+                    ref={excelInputRef}
+                    onChange={onExcelChange}
+                  />
 
-                {excelData.length > 0 ? (
-                  <>
-                    <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
-                    <h3 className="text-sm font-semibold text-green-700">
-                      {excelData.length} Rows Loaded
-                    </h3>
-                    <div className="mt-2 flex flex-wrap justify-center gap-1">
-                      {columns.slice(0, 3).map((col) => (
-                        <span
-                          key={col}
-                          className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800"
-                        >
-                          {col}
-                        </span>
-                      ))}
-                      {columns.length > 3 && (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">
-                          +{columns.length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <FileSpreadsheet className="mb-2 h-8 w-8 text-neutral-400" />
-                    <h3 className="text-sm font-semibold">Upload Excel Data</h3>
-                    <p className="mt-1 text-xs text-neutral-500">
-                      .xlsx or .csv files
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+                  {excelData.length > 0 ? (
+                    <>
+                      <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
+                      <h3 className="text-sm font-semibold text-green-700 dark:text-green-400">
+                        {excelData.length} Rows Loaded
+                      </h3>
+                      <div className="mt-3 flex flex-wrap justify-center gap-1">
+                        {columns.slice(0, 3).map((col) => (
+                          <Badge
+                            key={col}
+                            variant="secondary"
+                            className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300"
+                          >
+                            {col}
+                          </Badge>
+                        ))}
+                        {columns.length > 3 && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-300"
+                          >
+                            +{columns.length - 3}
+                          </Badge>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <FileSpreadsheet className="mb-2 h-8 w-8 text-neutral-400" />
+                      <h3 className="text-sm font-semibold">
+                        Upload Excel Data
+                      </h3>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        .xlsx or .csv files
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {activeTab === "design" && (
-            <div className="space-y-4">
-              <p className="text-sm text-neutral-500">
-                Upload your files first to start designing.
-              </p>
-            </div>
-          )}
+            <TabsContent value="design" className="mt-0 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Design Workspace</CardTitle>
+                  <CardDescription>
+                    Upload your files first to start designing.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </TabsContent>
 
-          {activeTab === "export" && (
-            <div className="space-y-4">
-              <p className="text-sm text-neutral-500">
-                Finish your design to generate certificates.
-              </p>
-              <button className="w-full cursor-not-allowed rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white opacity-50 shadow-sm transition-colors hover:bg-blue-700">
-                Generate ZIP
-              </button>
-            </div>
-          )}
-        </div>
+            <TabsContent value="export" className="mt-0 space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Generate Certificates
+                  </CardTitle>
+                  <CardDescription>
+                    Finish your design to generate certificates.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button disabled className="w-full">
+                    Generate ZIP
+                  </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </div>
+        </Tabs>
       </aside>
 
       {/* Main Workspace (Canvas Area) */}
-      <main className="relative flex flex-1 items-center justify-center overflow-auto bg-neutral-100 p-8">
+      <main className="relative flex flex-1 items-center justify-center overflow-auto bg-neutral-100/50 p-8 dark:bg-neutral-950">
         {templateImage ? (
-          <div className="relative border border-neutral-200 shadow-xl">
+          <div className="relative border border-neutral-200 shadow-xl dark:border-neutral-800">
             {/* Displaying raw image for now, Phase 3 will replace this with Fabric.js Canvas */}
             <img
               src={templateImage}
@@ -217,12 +216,12 @@ export default function CertificateEditor() {
           </div>
         ) : (
           <div className="text-center">
-            <div className="flex h-[600px] w-[800px] items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-400 shadow-lg">
-              <span className="flex flex-col items-center">
-                <FileImage className="mb-4 h-12 w-12 text-neutral-300" />
-                No Template Uploaded
-              </span>
-            </div>
+            <Card className="flex h-[600px] w-[800px] items-center justify-center border-2 border-dashed bg-transparent shadow-none">
+              <CardContent className="flex flex-col items-center justify-center p-0 text-neutral-400">
+                <FileImage className="mb-4 h-12 w-12 text-neutral-300 dark:text-neutral-700" />
+                <p className="font-medium">No Template Uploaded</p>
+              </CardContent>
+            </Card>
             <p className="mt-4 text-sm text-neutral-500">
               Upload a template from the Data tab to get started.
             </p>
