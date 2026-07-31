@@ -9,11 +9,11 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Type,
-  Trash2,
 } from "lucide-react";
 import { useEditorState } from "@/hooks/useEditorState";
 import * as fabric from "fabric";
 import CanvasWorkspace from "./CanvasWorkspace";
+import Toolbar from "./Toolbar";
 
 type ActiveTab = "upload" | "design" | "export";
 
@@ -272,42 +272,22 @@ export default function CertificateEditor() {
                     <Button
                       key={col}
                       variant="outline"
-                      className="w-full justify-start font-mono text-xs"
+                      className="w-full justify-start overflow-hidden font-mono text-xs"
                       onClick={() => addVariableToCanvas(col)}
                     >
-                      <Type className="mr-2 h-3 w-3" />
-                      {`{{${col}}}`}
+                      <Type className="mr-2 h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{`{{${col}}}`}</span>
                     </Button>
                   ))}
                 </CardContent>
               </Card>
 
-              {selectedObjectId && (
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center justify-between text-base">
-                      Edit Variable
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-red-500 hover:bg-red-50 hover:text-red-700"
-                        onClick={deleteSelectedObject}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </CardTitle>
-                    <CardDescription className="font-mono text-xs text-blue-600">{`{{${selectedObjectId}}}`}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="mb-2 text-xs text-neutral-500">
-                      Styling tools (font size, color) will be added in Phase 4.
-                    </p>
-                    <p className="text-xs text-neutral-500">
-                      For now, drag to position and use bounding box to scale.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
+              <Toolbar
+                key={selectedObjectId}
+                canvas={fabricCanvas}
+                selectedObjectId={selectedObjectId}
+                onDelete={deleteSelectedObject}
+              />
             </TabsContent>
 
             <TabsContent value="export" className="mt-0 space-y-4">

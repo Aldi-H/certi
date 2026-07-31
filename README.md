@@ -62,14 +62,24 @@ certi/
 - [x] Display buttons for each detected Excel column header in the Design tab.
 - [x] When a header is clicked, spawn a draggable, resizable text box on the canvas representing that variable (e.g. `{{Name}}`).
 
-### Phase 4: Toolbar & Styling
+### Phase 4: Toolbar & Styling (✅ Completed)
 
-- Build the `Toolbar.tsx`.
-- Allow the user to click a text box on the canvas and change its styling:
-  - Font Size & Font Family
-  - Text Color
+- [x] Build the `Toolbar.tsx` using Shadcn UI components (Select, Slider, Input, Label).
+- [x] Allow the user to click a text box on the canvas and change its styling:
+  - Font Size (Slider + number input, range 8–200)
+  - Font Family (10 built-in fonts via Select dropdown)
+  - Text Color (native color picker + hex input)
+  - Bold / Italic / Underline toggle buttons
   - Text Alignment (Left, Center, Right)
-- Add a "Delete" button to remove variables from the canvas.
+- [x] Add a "Delete" button to remove variables from the canvas.
+- [x] Toolbar auto-syncs when switching between selected objects.
+
+### Phase 4.5: Live Preview
+
+- Add a preview mode where `{{Name}}`, `{{Score}}`, etc. are replaced with real data from the Excel rows.
+- Add "Previous / Next" buttons to cycle through rows (e.g., Row 1 of 50, Row 2 of 50...).
+- Allow the user to toggle between **Edit mode** (shows `{{variables}}`, draggable) and **Preview mode** (shows real data, non-editable).
+- This lets the user verify positioning and styling before generating.
 
 ### Phase 5: The Generation Engine (The Grand Finale)
 
