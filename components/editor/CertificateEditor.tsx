@@ -1,12 +1,43 @@
 "use client";
 
-import React, { useState } from "react";
-import { Upload, Settings, Download } from "lucide-react";
+import React, { useRef, useState } from "react";
+import {
+  Upload,
+  Settings,
+  Download,
+  FileImage,
+  FileSpreadsheet,
+  CheckCircle2,
+} from "lucide-react";
+import { useEditorState } from "@/hooks/useEditorState";
 
 export default function CertificateEditor() {
   const [activeTab, setActiveTab] = useState<"upload" | "design" | "export">(
     "upload",
   );
+
+  const {
+    templateImage,
+    excelData,
+    columns,
+    handleTemplateUpload,
+    handleExcelUpload,
+  } = useEditorState();
+
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const excelInputRef = useRef<HTMLInputElement>(null);
+
+  const onImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleTemplateUpload(e.target.files[0]);
+    }
+  };
+
+  const onExcelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      handleExcelUpload(e.target.files[0]);
+    }
+  };
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-neutral-50 text-neutral-900">
@@ -62,22 +93,92 @@ export default function CertificateEditor() {
         <div className="flex-1 overflow-y-auto p-6">
           {activeTab === "upload" && (
             <div className="space-y-6">
-              <div className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-4 text-center transition-colors hover:bg-neutral-100">
-                <Upload className="mb-2 h-8 w-8 text-neutral-400" />
-                <h3 className="text-sm font-semibold">
-                  Upload Template (Image)
-                </h3>
-                <p className="mt-1 text-xs text-neutral-500">
-                  PNG, JPG up to 5MB
-                </p>
+              {/* Template Image Upload */}
+              <div
+                onClick={() => imageInputRef.current?.click()}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors ${
+                  templateImage
+                    ? "border-green-400 bg-green-50"
+                    : "border-neutral-300 bg-neutral-50 hover:bg-neutral-100"
+                }`}
+              >
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg"
+                  className="hidden"
+                  ref={imageInputRef}
+                  onChange={onImageChange}
+                />
+
+                {templateImage ? (
+                  <>
+                    <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
+                    <h3 className="text-sm font-semibold text-green-700">
+                      Template Uploaded
+                    </h3>
+                    <p className="mt-1 text-xs text-green-600">
+                      Click to replace
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <FileImage className="mb-2 h-8 w-8 text-neutral-400" />
+                    <h3 className="text-sm font-semibold">Upload Template</h3>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      PNG, JPG format
+                    </p>
+                  </>
+                )}
               </div>
 
-              <div className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-50 p-4 text-center transition-colors hover:bg-neutral-100">
-                <Upload className="mb-2 h-8 w-8 text-neutral-400" />
-                <h3 className="text-sm font-semibold">Upload Excel Data</h3>
-                <p className="mt-1 text-xs text-neutral-500">
-                  .xlsx or .csv files
-                </p>
+              {/* Excel Data Upload */}
+              <div
+                onClick={() => excelInputRef.current?.click()}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 text-center transition-colors ${
+                  excelData.length > 0
+                    ? "border-green-400 bg-green-50"
+                    : "border-neutral-300 bg-neutral-50 hover:bg-neutral-100"
+                }`}
+              >
+                <input
+                  type="file"
+                  accept=".xlsx, .csv"
+                  className="hidden"
+                  ref={excelInputRef}
+                  onChange={onExcelChange}
+                />
+
+                {excelData.length > 0 ? (
+                  <>
+                    <CheckCircle2 className="mb-2 h-8 w-8 text-green-500" />
+                    <h3 className="text-sm font-semibold text-green-700">
+                      {excelData.length} Rows Loaded
+                    </h3>
+                    <div className="mt-2 flex flex-wrap justify-center gap-1">
+                      {columns.slice(0, 3).map((col) => (
+                        <span
+                          key={col}
+                          className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800"
+                        >
+                          {col}
+                        </span>
+                      ))}
+                      {columns.length > 3 && (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] text-green-800">
+                          +{columns.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="mb-2 h-8 w-8 text-neutral-400" />
+                    <h3 className="text-sm font-semibold">Upload Excel Data</h3>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      .xlsx or .csv files
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -104,16 +205,29 @@ export default function CertificateEditor() {
       </aside>
 
       {/* Main Workspace (Canvas Area) */}
-      <main className="relative flex flex-1 items-center justify-center overflow-auto bg-neutral-100">
-        {/* We will place the Canvas here in Phase 3 */}
-        <div className="text-center">
-          <div className="flex h-[600px] w-[800px] items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-400 shadow-lg">
-            Canvas Workspace Area
+      <main className="relative flex flex-1 items-center justify-center overflow-auto bg-neutral-100 p-8">
+        {templateImage ? (
+          <div className="relative border border-neutral-200 shadow-xl">
+            {/* Displaying raw image for now, Phase 3 will replace this with Fabric.js Canvas */}
+            <img
+              src={templateImage}
+              alt="Template Preview"
+              className="max-h-[80vh] max-w-full object-contain"
+            />
           </div>
-          <p className="mt-4 text-sm text-neutral-500">
-            Upload a template to see it here
-          </p>
-        </div>
+        ) : (
+          <div className="text-center">
+            <div className="flex h-[600px] w-[800px] items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-400 shadow-lg">
+              <span className="flex flex-col items-center">
+                <FileImage className="mb-4 h-12 w-12 text-neutral-300" />
+                No Template Uploaded
+              </span>
+            </div>
+            <p className="mt-4 text-sm text-neutral-500">
+              Upload a template from the Data tab to get started.
+            </p>
+          </div>
+        )}
       </main>
     </div>
   );

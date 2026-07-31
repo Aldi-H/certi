@@ -48,12 +48,12 @@ certi/
 - [x] Build the main `CertificateEditor` layout (a split view: Controls on the left, Canvas on the right).
 - [x] Setup basic UI components.
 
-### Phase 2: Data & File Handling
+### Phase 2: Data & File Handling (✅ Completed)
 
-- Build the `FileUploader.tsx`.
-- Implement `lib/excel.ts` to parse uploaded Excel files and extract column headers (e.g., "Name", "Score") and row data.
-- Handle image file uploads to set as the certificate background.
-- Create the `useEditorState` hook to store the parsed Excel data and the template image URL.
+- [x] Build the File Upload UI (integrated directly into the Editor sidebar for simplicity).
+- [x] Implement `lib/excel.ts` to parse uploaded Excel files and extract column headers (e.g., "Name", "Score") and row data.
+- [x] Handle image file uploads to set as the certificate background.
+- [x] Create the `useEditorState` hook to store the parsed Excel data and the template image URL.
 
 ### Phase 3: The Interactive Canvas
 
