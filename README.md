@@ -8,8 +8,10 @@ A client-side web application built with Next.js to automate the generation of c
 - **Styling:** Tailwind CSS
 - **Excel Parsing:** `xlsx`
 - **Interactive Canvas:** `fabric.js`
-- **PDF Generation:** `pdf-lib` / `jspdf`
+- **PDF Generation:** `pdf-lib`
+- **PDF Rendering:** `pdfjs-dist` (for PDF template uploads)
 - **ZIP Bundling:** `jszip` & `file-saver`
+- **Email Sending:** `nodemailer` (SMTP)
 
 ---
 
@@ -18,24 +20,30 @@ A client-side web application built with Next.js to automate the generation of c
 ```text
 certi/
 ├── app/
-│   ├── globals.css           # Global styles and Tailwind configuration
-│   ├── layout.tsx            # Main application layout
-│   └── page.tsx              # Main application page (holds the Editor)
+│   ├── api/
+│   │   └── send-email/
+│   │       └── route.ts          # Next.js API route for sending emails via SMTP
+│   ├── globals.css               # Global styles and Tailwind configuration
+│   ├── layout.tsx                # Main application layout
+│   └── page.tsx                  # Main application page (holds the Editor)
 ├── components/
-│   ├── ui/                   # Generic UI components (Buttons, Inputs, Dialogs)
-│   └── editor/               # Specific components for the certificate generator
+│   ├── ui/                       # Generic UI components (Buttons, Inputs, Dialogs)
+│   └── editor/                   # Specific components for the certificate generator
 │       ├── CertificateEditor.tsx # The main wrapper component
-│       ├── FileUploader.tsx      # Handles drag-and-drop for Excel & Template
 │       ├── CanvasWorkspace.tsx   # The Fabric.js interactive canvas area
 │       ├── Toolbar.tsx           # Controls for text (font size, color, add variable)
-│       └── ExportPanel.tsx       # Progress bar and Download buttons
+│       ├── ExportPanel.tsx       # Progress bar and Download buttons
+│       └── EmailPanel.tsx        # Email distribution UI (ZIP upload, matching, sending)
 ├── lib/
-│   ├── utils.ts              # Helper functions (e.g., Tailwind class merging)
-│   ├── excel.ts              # Logic to read and parse .xlsx/.csv files using `xlsx`
-│   └── generator.ts          # Logic to loop data, create PDFs, and zip using `jszip`
+│   ├── utils.ts                  # Helper functions (e.g., Tailwind class merging)
+│   ├── excel.ts                  # Logic to read and parse .xlsx/.csv files using `xlsx`
+│   ├── pdf.ts                    # PDF rendering (pdfjs-dist) for template uploads
+│   ├── generator.ts              # Logic to loop data, create PDFs, and zip using `jszip`
+│   ├── email-matcher.ts          # Unzip signed PDFs, read metadata, match to Excel rows
+│   └── file.ts                   # ZIP/file download helpers (jszip, file-saver)
 ├── hooks/
-│   └── useEditorState.ts     # Custom React hook to manage canvas state, uploaded data, and selected template
-└── public/                   # Static assets (fonts, default images)
+│   └── useEditorState.ts         # Custom React hook to manage canvas state, uploaded data, and selected template
+└── public/                       # Static assets (fonts, default images)
 ```
 
 ---
@@ -45,7 +53,7 @@ certi/
 ### Phase 1: Setup & Foundations (✅ Completed)
 
 - [x] Scaffold the folders (`components/editor`, `lib`, `hooks`).
-- [x] Build the main `CertificateEditor` layout (a split view: Controls on the left, Canvas on the right).
+- [x] Build the main `CertificateEditor` layout (a top-level mode switch between the Generator Hub and the Email Distribution Hub).
 - [x] Setup basic UI components.
 
 ### Phase 2: Data & File Handling (✅ Completed)
@@ -125,14 +133,17 @@ SMTP_FROM="Certification Board <no-reply@yourdomain.com>"
 
 ---
 
-### Phase 6: Bulk Email Distribution & Metadata Matching (New Feature)
+### Phase 6: Bulk Email Distribution & Metadata Matching (✅ Completed)
 
 - **The Challenge:** After certificates are signed by external/government applications, the files are often renamed, making it difficult to match them back to the correct person for emailing.
-- **The Solution (Invisible Metadata):** During **Phase 5**, the generator will inject the recipient's unique email address into the hidden PDF `Keywords` metadata using `pdf-lib`. This leaves the visual certificate completely untouched.
-- **The Feature:**
-  1. Create a new "Email Distribution" tab.
-  2. The user can customize an **Email Message Template** (e.g., "Hello {{Name}}, please find your signed certificate attached...").
-  3. The user uploads the returned `.zip` file of signed PDFs alongside the original Excel data.
-  4. The app unzips the file, reads the hidden `Keywords` metadata from each PDF to extract the email address, completely ignoring the filenames.
-  5. It matches the email to the exact row in the Excel data.
-  6. The app uses an API route to bulk email the correctly matched, signed PDF to each recipient using the customized message template!
+- **The Solution (Smart Matching):**
+  - _Primary:_ The generator injects the recipient's unique email address into the hidden PDF `Keywords` metadata using `pdf-lib`. The system extracts this completely ignoring filenames.
+  - _Fallback:_ If a PDF lacks metadata (e.g. externally generated), the system intelligently falls back to matching the base filename against the uploaded Excel rows to find the recipient.
+- [x] **The Feature:**
+  1. Created a dedicated top-level **Email Distributor** mode, hiding the visual canvas and presenting a clean distribution dashboard via `EmailPanel.tsx`.
+  2. **Standalone Capable:** Users can upload `.xlsx` files directly in the Distributor Hub to use dynamic `{{Variables}}` in their emails, or they can skip Excel entirely and just send generic emails directly to addresses found in the PDFs.
+  3. The user customizes an **Email Subject** and **Email Body Template** (supports `{{Variable}}` placeholders).
+  4. The user uploads either a `.zip` file of signed PDFs or a single `.pdf` file.
+  5. The system performs the Smart Matching (Metadata -> Filename) and displays a detailed **Match Preview** showing matched counts, the `SMTP_FROM` sender address, and a collapsible list of exact recipient emails.
+  6. The app uses a **Next.js API route** (`app/api/send-email/route.ts`) to bulk email the PDFs to each recipient using `nodemailer` via SMTP.
+  7. Full progress bar during sending, success/error states, and retry capability.

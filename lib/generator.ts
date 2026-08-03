@@ -48,6 +48,7 @@ export async function generateCertificates(
   canvas: fabric.Canvas,
   excelData: Record<string, unknown>[],
   onProgress: (progress: GenerationProgress) => void,
+  emailColumn?: string,
 ): Promise<void> {
   const total = excelData.length;
   if (total === 0) throw new Error("No data rows to generate.");
@@ -118,6 +119,14 @@ export async function generateCertificates(
         width: pngImage.width,
         height: pngImage.height,
       });
+
+      // Inject recipient email into PDF Keywords metadata for Phase 6 matching
+      if (emailColumn) {
+        const email = String(row[emailColumn] ?? "").trim();
+        if (email) {
+          pdfDoc.setKeywords([email]);
+        }
+      }
 
       const pdfBytes = await pdfDoc.save();
 
