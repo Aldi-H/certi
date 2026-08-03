@@ -9,6 +9,10 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   Type,
+  Eye,
+  EyeOff,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useEditorState } from "@/hooks/useEditorState";
 import * as fabric from "fabric";
@@ -37,6 +41,8 @@ export default function CertificateEditor() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("upload");
   const [fabricCanvas, setFabricCanvas] = useState<fabric.Canvas | null>(null);
   const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [previewRowIndex, setPreviewRowIndex] = useState(0);
 
   const {
     templateImage,
@@ -90,14 +96,16 @@ export default function CertificateEditor() {
       return;
     }
 
-    const text = new fabric.IText(`{{${columnName}}}`, {
-      left: fabricCanvas.width ? fabricCanvas.width / 2 - 50 : 100,
+    const text = new fabric.Textbox(`{{${columnName}}}`, {
+      left: fabricCanvas.width ? fabricCanvas.width / 2 - 150 : 100,
       top: fabricCanvas.height ? fabricCanvas.height / 2 : 100,
+      width: 300,
       fontFamily: "Arial",
       fontSize: 40,
       fill: "#000000",
       textAlign: "center",
       cursorColor: "#000000",
+      splitByGrapheme: false,
     });
 
     (text as FabricObjectWithId).customId = columnName;
@@ -115,6 +123,19 @@ export default function CertificateEditor() {
       fabricCanvas.discardActiveObject();
       fabricCanvas.renderAll();
     }
+  };
+
+  // --- Live Preview Logic ---
+  const togglePreviewMode = () => {
+    setIsPreviewMode((prev) => !prev);
+  };
+
+  const goToPreviousRow = () => {
+    setPreviewRowIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const goToNextRow = () => {
+    setPreviewRowIndex((prev) => Math.min(excelData.length - 1, prev + 1));
   };
 
   return (
@@ -260,7 +281,98 @@ export default function CertificateEditor() {
             </TabsContent>
 
             <TabsContent value="design" className="mt-0 space-y-4">
-              <Card>
+              {/* Live Preview Card */}
+              {excelData.length > 0 && (
+                <Card
+                  className={`transition-colors ${
+                    isPreviewMode
+                      ? "border-violet-400 bg-violet-50/50 dark:border-violet-600 dark:bg-violet-950/20"
+                      : ""
+                  }`}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between text-base">
+                      Live Preview
+                      <Button
+                        variant={isPreviewMode ? "default" : "outline"}
+                        size="sm"
+                        className={`gap-1.5 ${
+                          isPreviewMode
+                            ? "bg-violet-600 hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+                            : ""
+                        }`}
+                        onClick={togglePreviewMode}
+                      >
+                        {isPreviewMode ? (
+                          <>
+                            <EyeOff size={14} /> Edit Mode
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={14} /> Preview
+                          </>
+                        )}
+                      </Button>
+                    </CardTitle>
+                    <CardDescription>
+                      {isPreviewMode
+                        ? "Showing real data — objects are locked."
+                        : "Toggle to preview with real Excel data."}
+                    </CardDescription>
+                  </CardHeader>
+
+                  {isPreviewMode && (
+                    <CardContent className="pt-0">
+                      <div className="flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-800 dark:bg-violet-950/40">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={goToPreviousRow}
+                          disabled={previewRowIndex === 0}
+                        >
+                          <ChevronLeft size={16} />
+                        </Button>
+                        <span className="text-sm font-medium text-violet-700 tabular-nums dark:text-violet-300">
+                          Row {previewRowIndex + 1} of {excelData.length}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={goToNextRow}
+                          disabled={previewRowIndex >= excelData.length - 1}
+                        >
+                          <ChevronRight size={16} />
+                        </Button>
+                      </div>
+
+                      {/* Data preview for current row */}
+                      <div className="mt-3 space-y-1">
+                        {columns.map((col) => (
+                          <div
+                            key={col}
+                            className="flex items-center justify-between gap-2 text-xs"
+                          >
+                            <span className="font-mono text-neutral-500 dark:text-neutral-400">
+                              {`{{${col}}}`}
+                            </span>
+                            <span className="truncate font-medium text-violet-700 dark:text-violet-300">
+                              {String(excelData[previewRowIndex]?.[col] ?? "—")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              )}
+
+              <Card
+                className={
+                  isPreviewMode ? "pointer-events-none opacity-50" : ""
+                }
+              >
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Add Variables</CardTitle>
                   <CardDescription>
@@ -274,6 +386,7 @@ export default function CertificateEditor() {
                       variant="outline"
                       className="w-full justify-start overflow-hidden font-mono text-xs"
                       onClick={() => addVariableToCanvas(col)}
+                      disabled={isPreviewMode}
                     >
                       <Type className="mr-2 h-3 w-3 flex-shrink-0" />
                       <span className="truncate">{`{{${col}}}`}</span>
@@ -282,12 +395,18 @@ export default function CertificateEditor() {
                 </CardContent>
               </Card>
 
-              <Toolbar
-                key={selectedObjectId}
-                canvas={fabricCanvas}
-                selectedObjectId={selectedObjectId}
-                onDelete={deleteSelectedObject}
-              />
+              <div
+                className={
+                  isPreviewMode ? "pointer-events-none opacity-50" : ""
+                }
+              >
+                <Toolbar
+                  key={selectedObjectId}
+                  canvas={fabricCanvas}
+                  selectedObjectId={selectedObjectId}
+                  onDelete={deleteSelectedObject}
+                />
+              </div>
             </TabsContent>
 
             <TabsContent value="export" className="mt-0 space-y-4">
@@ -317,6 +436,12 @@ export default function CertificateEditor() {
           <CanvasWorkspace
             templateImage={templateImage}
             onCanvasReady={handleCanvasReady}
+            isPreviewMode={isPreviewMode}
+            previewRowData={
+              isPreviewMode && excelData.length > 0
+                ? excelData[previewRowIndex]
+                : null
+            }
           />
         ) : (
           <div className="text-center">

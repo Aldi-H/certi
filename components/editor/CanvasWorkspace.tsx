@@ -3,19 +3,28 @@
 import React, { useEffect, useRef } from "react";
 import * as fabric from "fabric";
 
+interface FabricObjectWithId extends fabric.FabricObject {
+  customId?: string;
+}
+
 interface CanvasWorkspaceProps {
   templateImage: string;
   onCanvasReady: (canvas: fabric.Canvas) => void;
+  isPreviewMode?: boolean;
+  previewRowData?: Record<string, unknown> | null;
 }
 
 export default function CanvasWorkspace({
   templateImage,
   onCanvasReady,
+  isPreviewMode = false,
+  previewRowData = null,
 }: CanvasWorkspaceProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
 
+  // Initialize canvas + load background image
   useEffect(() => {
     if (!canvasRef.current || !wrapperRef.current) return;
     let isDisposed = false;
@@ -70,6 +79,73 @@ export default function CanvasWorkspace({
       fabricRef.current = null;
     };
   }, [templateImage, onCanvasReady]);
+
+  // Handle preview mode toggle and row data changes
+  useEffect(() => {
+    const canvas = fabricRef.current;
+    if (!canvas) return;
+
+    const objects = canvas.getObjects() as (fabric.IText &
+      FabricObjectWithId)[];
+
+    if (isPreviewMode && previewRowData) {
+      // Deselect everything first
+      canvas.discardActiveObject();
+
+      objects.forEach((obj) => {
+        if (!(obj instanceof fabric.IText) || !obj.customId) return;
+
+        const columnName = obj.customId;
+        const realValue = String(previewRowData[columnName] ?? "");
+
+        // Store the original placeholder text if not already stored
+        if (!("_originalText" in obj)) {
+          (obj as unknown as Record<string, unknown>)._originalText = obj.text;
+        }
+
+        // Replace with real data
+        obj.set("text", realValue);
+
+        // Lock the object in preview mode
+        obj.set({
+          selectable: false,
+          evented: false,
+          hasControls: false,
+          hasBorders: false,
+        });
+      });
+
+      // Disable selection on canvas level
+      canvas.selection = false;
+    } else {
+      // Restore original placeholder text and unlock objects
+      objects.forEach((obj) => {
+        if (!(obj instanceof fabric.IText) || !obj.customId) return;
+
+        // Restore original text
+        if ("_originalText" in obj) {
+          obj.set(
+            "text",
+            (obj as unknown as Record<string, unknown>)._originalText as string,
+          );
+          delete (obj as unknown as Record<string, unknown>)._originalText;
+        }
+
+        // Unlock the object
+        obj.set({
+          selectable: true,
+          evented: true,
+          hasControls: true,
+          hasBorders: true,
+        });
+      });
+
+      // Re-enable selection
+      canvas.selection = true;
+    }
+
+    canvas.renderAll();
+  }, [isPreviewMode, previewRowData]);
 
   return (
     <div

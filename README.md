@@ -74,12 +74,13 @@ certi/
 - [x] Add a "Delete" button to remove variables from the canvas.
 - [x] Toolbar auto-syncs when switching between selected objects.
 
-### Phase 4.5: Live Preview
+### Phase 4.5: Live Preview (✅ Completed)
 
-- Add a preview mode where `{{Name}}`, `{{Score}}`, etc. are replaced with real data from the Excel rows.
-- Add "Previous / Next" buttons to cycle through rows (e.g., Row 1 of 50, Row 2 of 50...).
-- Allow the user to toggle between **Edit mode** (shows `{{variables}}`, draggable) and **Preview mode** (shows real data, non-editable).
-- This lets the user verify positioning and styling before generating.
+- [x] Add a preview mode where `{{Name}}`, `{{Score}}`, etc. are replaced with real data from the Excel rows.
+- [x] Add "Previous / Next" buttons to cycle through rows (e.g., Row 1 of 50, Row 2 of 50...).
+- [x] Allow the user to toggle between **Edit mode** (shows `{{variables}}`, draggable) and **Preview mode** (shows real data, non-editable).
+- [x] Use `fabric.Textbox` instead of `IText` so long text wraps automatically within a resizable width boundary.
+- [x] This lets the user verify positioning and styling before generating.
 
 ### Phase 5: The Generation Engine (The Grand Finale)
 
