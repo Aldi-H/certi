@@ -18,6 +18,7 @@ import { useEditorState } from "@/hooks/useEditorState";
 import * as fabric from "fabric";
 import CanvasWorkspace from "./CanvasWorkspace";
 import Toolbar from "./Toolbar";
+import ExportPanel from "./ExportPanel";
 
 type ActiveTab = "upload" | "design" | "export";
 
@@ -410,21 +411,11 @@ export default function CertificateEditor() {
             </TabsContent>
 
             <TabsContent value="export" className="mt-0 space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    Generate Certificates
-                  </CardTitle>
-                  <CardDescription>
-                    Finish your design to generate certificates.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button disabled className="w-full">
-                    Generate ZIP (Phase 5)
-                  </Button>
-                </CardContent>
-              </Card>
+              <ExportPanel
+                canvas={fabricCanvas}
+                excelData={excelData}
+                columns={columns}
+              />
             </TabsContent>
           </div>
         </Tabs>

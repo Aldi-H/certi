@@ -82,15 +82,47 @@ certi/
 - [x] Use `fabric.Textbox` instead of `IText` so long text wraps automatically within a resizable width boundary.
 - [x] This lets the user verify positioning and styling before generating.
 
-### Phase 5: The Generation Engine (The Grand Finale)
+### Phase 5: The Generation Engine (✅ Completed)
 
-- Build the `ExportPanel.tsx` and `lib/generator.ts`.
-- When "Generate" is clicked, write logic that:
+- [x] Build the `ExportPanel.tsx` and `lib/generator.ts`.
+- [x] When "Generate" is clicked, write logic that:
   1. Loops through every row of the Excel data.
-  2. Updates the text on the hidden Fabric canvas with the current row's specific data.
-  3. Converts the canvas to an image/PDF.
-  4. Pushes that PDF into a `jszip` bundle.
+  2. Updates the text on the Fabric canvas with the current row's specific data.
+  3. Converts the canvas to a 2× resolution PNG and embeds it in a PDF via `pdf-lib`.
+  4. Pushes that PDF into a `jszip` bundle (with deduplicated filenames).
   5. Triggers a single `.zip` file download to the user using `file-saver`.
+- [x] Export panel shows row/variable stats, animated progress bar, and success/error states.
+
+### SMTP Email Configuration
+
+To enable the bulk email distribution feature (Phase 6), this application uses SMTP (Simple Mail Transfer Protocol) configured via environment variables.
+
+#### How SMTP Works
+
+SMTP is the standard protocol for sending emails across the internet. By configuring SMTP credentials, you allow the Next.js server to log into your email provider (like Gmail, Outlook, or a custom server) and send emails on your behalf, just as if you were using an email client like Outlook or Apple Mail.
+
+#### How to Set It Up
+
+1. Create a `.env.local` file in the root of your project.
+2. Add your SMTP credentials to the file:
+
+```env
+# Example for Gmail
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM="Certification Board <no-reply@yourdomain.com>"
+```
+
+**Note for Gmail Users:** You cannot use your regular Gmail password. You must use an **App Password**.
+
+1. Go to your [Google Account Security settings](https://myaccount.google.com/security).
+2. Ensure **2-Step Verification** is turned on.
+3. Search for **App passwords** and create a new one (e.g., name it "Certificate App").
+4. Use that 16-character password as your `SMTP_PASS`.
+
+---
 
 ### Phase 6: Bulk Email Distribution & Metadata Matching (New Feature)
 
