@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { parseWorkbook } from "@/lib/excel";
+import { renderPdfPageToDataUrl } from "@/lib/pdf";
 
 export type CertificateVariable = {
   id: string;
@@ -18,13 +19,20 @@ export function useEditorState() {
   const [columns, setColumns] = useState<string[]>([]);
   const [variables, setVariables] = useState<CertificateVariable[]>([]);
 
-  // Handle image upload
-  const handleTemplateUpload = useCallback((file: File) => {
-    if (file && file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file);
-      setTemplateImage(url);
-    } else {
-      alert("Please upload a valid image file (PNG/JPG).");
+  const handleTemplateUpload = useCallback(async (file: File) => {
+    try {
+      if (file.type === "application/pdf") {
+        const dataUrl = await renderPdfPageToDataUrl(file);
+        setTemplateImage(dataUrl);
+      } else if (file.type.startsWith("image/")) {
+        const url = URL.createObjectURL(file);
+        setTemplateImage(url);
+      } else {
+        alert("Please upload a valid file (PNG, JPG, or PDF).");
+      }
+    } catch (error) {
+      console.error("Error processing template:", error);
+      alert("Failed to process the template file. Please try again.");
     }
   }, []);
 
@@ -36,7 +44,6 @@ export function useEditorState() {
 
       if (data && data.length > 0) {
         setExcelData(data);
-        // Extract headers from the first row
         const headers = Object.keys(data[0]);
         setColumns(headers);
       } else {

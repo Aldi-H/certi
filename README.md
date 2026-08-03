@@ -1,6 +1,6 @@
 # Certificate Generator
 
-A client-side web application built with Next.js to automate the generation of certificates. Users can upload a background image, upload an Excel file containing user data, map the data to the certificate using an interactive canvas, and download the generated certificates as a ZIP file containing multiple PDFs.
+A client-side web application built with Next.js to automate the generation of certificates. Users can upload a background template (PDF, PNG, or JPG), upload an Excel file containing user data, map the data to the certificate using an interactive canvas, and download the generated certificates as a ZIP file containing multiple PDFs.
 
 ## 🚀 Tech Stack
 
@@ -52,13 +52,14 @@ certi/
 
 - [x] Build the File Upload UI (integrated directly into the Editor sidebar for simplicity).
 - [x] Implement `lib/excel.ts` to parse uploaded Excel files and extract column headers (e.g., "Name", "Score") and row data.
-- [x] Handle image file uploads to set as the certificate background.
+- [x] Handle template file uploads (PDF, PNG, JPG) to set as the certificate background.
+  - _Note on PDFs:_ If a user uploads a PDF template, the app uses `pdfjs-dist` to safely read the first page in-memory and convert it to a high-quality image for the canvas. The original PDF file on the user's computer is **never modified or overwritten**.
 - [x] Create the `useEditorState` hook to store the parsed Excel data and the template image URL.
 
 ### Phase 3: The Interactive Canvas (✅ Completed)
 
 - [x] Integrate `fabric.js` into `CanvasWorkspace.tsx`.
-- [x] Load the uploaded template image as the non-movable background of the canvas.
+- [x] Load the uploaded template (PDF, PNG, JPG) as the non-movable background of the canvas.
 - [x] Display buttons for each detected Excel column header in the Design tab.
 - [x] When a header is clicked, spawn a draggable, resizable text box on the canvas representing that variable (e.g. `{{Name}}`).
 

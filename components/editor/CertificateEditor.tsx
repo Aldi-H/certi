@@ -189,7 +189,7 @@ export default function CertificateEditor() {
                 <CardContent className="flex flex-col items-center justify-center p-6 text-center">
                   <input
                     type="file"
-                    accept="image/png, image/jpeg"
+                    accept="image/png, image/jpeg, application/pdf"
                     className="hidden"
                     ref={imageInputRef}
                     onChange={onImageChange}
@@ -210,7 +210,7 @@ export default function CertificateEditor() {
                       <FileImage className="mb-2 h-8 w-8 text-neutral-400" />
                       <h3 className="text-sm font-semibold">Upload Template</h3>
                       <p className="mt-1 text-xs text-neutral-500">
-                        PNG, JPG format
+                        PNG, JPG, or PDF format
                       </p>
                     </>
                   )}
