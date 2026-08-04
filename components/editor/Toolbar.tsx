@@ -43,6 +43,7 @@ const FONT_FAMILIES = [
   "Garamond",
   "Palatino",
   "Impact",
+  "Quicksand",
 ];
 
 interface ToolbarProps {
