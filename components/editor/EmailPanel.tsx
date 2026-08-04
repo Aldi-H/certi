@@ -11,6 +11,7 @@ import {
   ChevronDown,
   ChevronUp,
   Table,
+  Eye,
 } from "lucide-react";
 
 import {
@@ -442,14 +443,33 @@ export default function EmailPanel({
                           <span className="truncate font-mono">
                             {m.email || "—"}
                           </span>
-                          {excelData.length > 0 && (
-                            <Badge
-                              variant={m.matchedRow ? "default" : "secondary"}
-                              className="ml-2 flex-shrink-0 text-[10px]"
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-neutral-500 hover:text-blue-600 dark:hover:text-blue-400"
+                              title="Preview PDF"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const blob = new Blob(
+                                  [m.pdfBytes as unknown as BlobPart],
+                                  { type: "application/pdf" },
+                                );
+                                const url = URL.createObjectURL(blob);
+                                window.open(url, "_blank");
+                              }}
                             >
-                              {m.matchedRow ? "✓" : "?"}
-                            </Badge>
-                          )}
+                              <Eye size={14} />
+                            </Button>
+                            {excelData.length > 0 && (
+                              <Badge
+                                variant={m.matchedRow ? "default" : "secondary"}
+                                className="ml-2 flex-shrink-0 text-[10px]"
+                              >
+                                {m.matchedRow ? "✓" : "?"}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -35,6 +35,38 @@ export async function matchCertificatesToRecipients(
   const processPdf = async (filename: string, pdfBytes: Uint8Array) => {
     const pdfDoc = await PDFDocument.load(pdfBytes);
     const keywords = pdfDoc.getKeywords()?.trim() ?? "";
+
+    // Phase 6 Multi-page PDF splitting
+    if (pdfDoc.getPageCount() > 1) {
+      const emails = keywords ? keywords.split(",") : [];
+      for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+        const newPdf = await PDFDocument.create();
+        const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+        newPdf.addPage(copiedPage);
+        const newPdfBytes = await newPdf.save();
+
+        const email = emails[i] ? emails[i].trim() : "";
+        let matchedRow = null;
+        if (email && excelData.length > 0) {
+          matchedRow =
+            excelData.find(
+              (row) =>
+                String(row[emailColumn] ?? "")
+                  .toLowerCase()
+                  .trim() === email.toLowerCase(),
+            ) ?? null;
+        }
+
+        results.push({
+          filename: `certificate_${i + 1}.pdf`,
+          email,
+          pdfBytes: newPdfBytes,
+          matchedRow,
+        });
+      }
+      return;
+    }
+
     let matchedRow = null;
 
     if (excelData.length > 0) {
