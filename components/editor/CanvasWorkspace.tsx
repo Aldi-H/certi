@@ -96,7 +96,25 @@ export default function CanvasWorkspace({
         if (!(obj instanceof fabric.IText) || !obj.customId) return;
 
         const columnName = obj.customId;
-        const realValue = String(previewRowData[columnName] ?? "");
+        const rawValue = previewRowData[columnName];
+        let realValue = String(rawValue ?? "");
+
+        const numFmt = (obj as fabric.IText & { numberFormat?: string })
+          .numberFormat;
+        if (
+          numFmt &&
+          numFmt !== "none" &&
+          rawValue !== undefined &&
+          rawValue !== null &&
+          rawValue !== ""
+        ) {
+          const num = Number(rawValue);
+          if (!isNaN(num)) {
+            if (numFmt === "round") realValue = String(Math.round(num));
+            else if (numFmt === "1-dec") realValue = num.toFixed(1);
+            else if (numFmt === "2-dec") realValue = num.toFixed(2);
+          }
+        }
 
         // Store the original placeholder text if not already stored
         if (!("_originalText" in obj)) {

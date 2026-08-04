@@ -67,6 +67,7 @@ export default function Toolbar({
         isBold: false,
         isItalic: false,
         isUnderline: false,
+        numberFormat: "none",
       };
     }
     const active = canvas.getActiveObject();
@@ -79,6 +80,7 @@ export default function Toolbar({
         isBold: false,
         isItalic: false,
         isUnderline: false,
+        numberFormat: "none",
       };
     }
     return {
@@ -89,18 +91,36 @@ export default function Toolbar({
       isBold: active.fontWeight === "bold",
       isItalic: active.fontStyle === "italic",
       isUnderline: active.underline ?? false,
+      numberFormat:
+        (active as fabric.IText & { numberFormat?: string }).numberFormat ??
+        "none",
     };
   }, [canvas, selectedObjectId]);
 
   const [localFontSize, setLocalFontSize] = useState(toolbarState.fontSize);
   const [localColor, setLocalColor] = useState(toolbarState.fillColor);
+  const [localNumberFormat, setLocalNumberFormat] = useState(
+    toolbarState.numberFormat,
+  );
   const [prevSelectedId, setPrevSelectedId] = useState(selectedObjectId);
 
   if (selectedObjectId !== prevSelectedId) {
     setPrevSelectedId(selectedObjectId);
     setLocalFontSize(toolbarState.fontSize);
     setLocalColor(toolbarState.fillColor);
+    setLocalNumberFormat(toolbarState.numberFormat);
   }
+
+  const handleNumberFormatChange = (val: string) => {
+    const text = getActiveText();
+    if (!text) return;
+    setLocalNumberFormat(val);
+    (text as fabric.IText & { set: (k: string, v: string) => void }).set(
+      "numberFormat",
+      val,
+    );
+    canvas?.renderAll();
+  };
 
   const getActiveText = (): fabric.IText | null => {
     if (!canvas) return null;
@@ -286,6 +306,27 @@ export default function Toolbar({
               maxLength={7}
             />
           </div>
+        </div>
+
+        <Separator />
+
+        {/* Number Formatting */}
+        <div className="space-y-2">
+          <Label className="text-xs">Number Format</Label>
+          <Select
+            value={localNumberFormat}
+            onValueChange={handleNumberFormatChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None (Raw)</SelectItem>
+              <SelectItem value="round">Round (Integer)</SelectItem>
+              <SelectItem value="1-dec">1 Decimal</SelectItem>
+              <SelectItem value="2-dec">2 Decimals</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <Separator />

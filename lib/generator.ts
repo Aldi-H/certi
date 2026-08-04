@@ -98,8 +98,28 @@ export async function generateCertificates(
 
       textObjects.forEach((obj) => {
         if (!obj.customId) return;
-        const value = String(row[obj.customId] ?? "");
-        obj.set("text", value);
+
+        const rawValue = row[obj.customId];
+        let valueStr = String(rawValue ?? "");
+
+        const numFmt = (obj as fabric.IText & { numberFormat?: string })
+          .numberFormat;
+        if (
+          numFmt &&
+          numFmt !== "none" &&
+          rawValue !== undefined &&
+          rawValue !== null &&
+          rawValue !== ""
+        ) {
+          const num = Number(rawValue);
+          if (!isNaN(num)) {
+            if (numFmt === "round") valueStr = String(Math.round(num));
+            else if (numFmt === "1-dec") valueStr = num.toFixed(1);
+            else if (numFmt === "2-dec") valueStr = num.toFixed(2);
+          }
+        }
+
+        obj.set("text", valueStr);
       });
       canvas.renderAll();
 
