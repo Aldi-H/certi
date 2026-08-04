@@ -1,6 +1,6 @@
 # Certificate Generator
 
-A client-side web application built with Next.js to automate the generation of certificates. Users can upload a background template (PDF, PNG, or JPG), upload an Excel file containing user data, map the data to the certificate using an interactive canvas, and download the generated certificates as a ZIP file containing multiple PDFs.
+A client-side web application built with Next.js to automate the generation of certificates. Users can upload a background template (PDF, PNG, or JPG), upload an Excel file containing user data, map the data to the certificate using an interactive canvas, and download the generated certificates as a ZIP file containing multiple PDFs. Additionally, the text editor features a color change option, so users can easily change the color of the text.
 
 ## 🚀 Tech Stack
 
@@ -101,6 +101,7 @@ certi/
   4. Pushes that PDF into a `jszip` bundle (with deduplicated filenames).
   5. Triggers a single `.zip` file download to the user using `file-saver`.
 - [x] Export panel shows row/variable stats, animated progress bar, and success/error states.
+- [ ] **(Proposed) Dual Export Mode:** Give users a choice between exporting as a **ZIP of single PDFs** (default) or a **Single Multi-page PDF**. If a single PDF is chosen, the generator will combine all certificates into one file and embed a comma-separated list of all recipient emails into the document's metadata for later matching.
 
 ### SMTP Email Configuration
 
@@ -144,6 +145,8 @@ SMTP_FROM="Certification Board <no-reply@yourdomain.com>"
   2. **Standalone Capable:** Users can upload `.xlsx` files directly in the Distributor Hub to use dynamic `{{Variables}}` in their emails, or they can skip Excel entirely and just send generic emails directly to addresses found in the PDFs.
   3. The user customizes an **Email Subject** and **Email Body Template** (supports `{{Variable}}` placeholders).
   4. The user uploads either a `.zip` file of signed PDFs or a single `.pdf` file.
+     - _(Proposed)_ If a **Single Multi-page PDF** is uploaded (generated from the dual export mode), the system will read the comma-separated emails from the metadata, split the document into individual pages, and map each page to the correct email address for distribution.
   5. The system performs the Smart Matching (Metadata -> Filename) and displays a detailed **Match Preview** showing matched counts, the `SMTP_FROM` sender address, and a collapsible list of exact recipient emails.
+     - _(Proposed)_ Add a **PDF Preview** feature for each matched recipient in the list, allowing users to view the exact certificate attachment before clicking "Send" to ensure accuracy.
   6. The app uses a **Next.js API route** (`app/api/send-email/route.ts`) to bulk email the PDFs to each recipient using `nodemailer` via SMTP.
   7. Full progress bar during sending, success/error states, and retry capability.

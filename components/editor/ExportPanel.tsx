@@ -22,6 +22,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface ExportPanelProps {
   canvas: fabric.Canvas | null;
@@ -37,6 +45,7 @@ export default function ExportPanel({
   columns,
 }: ExportPanelProps) {
   const [state, setState] = useState<GenerationState>("idle");
+  const [exportMode, setExportMode] = useState<"zip" | "pdf">("zip");
   const [progress, setProgress] = useState<GenerationProgress>({
     current: 0,
     total: 0,
@@ -63,9 +72,15 @@ export default function ExportPanel({
     setProgress({ current: 0, total: excelData.length, status: "Starting…" });
 
     try {
-      await generateCertificates(canvas, excelData, (p) => {
-        setProgress(p);
-      });
+      await generateCertificates(
+        canvas,
+        excelData,
+        (p) => {
+          setProgress(p);
+        },
+        undefined,
+        exportMode,
+      );
       setState("done");
     } catch (err) {
       setState("error");
@@ -130,6 +145,21 @@ export default function ExportPanel({
           {/* Idle State */}
           {state === "idle" && (
             <>
+              <div className="space-y-2">
+                <Label className="text-xs">Export Format</Label>
+                <Select
+                  value={exportMode}
+                  onValueChange={(val: "zip" | "pdf") => setExportMode(val)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="zip">ZIP (Multiple PDFs)</SelectItem>
+                    <SelectItem value="pdf">Single PDF (Multi-page)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               {!canGenerate && (
                 <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
                   <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
@@ -192,7 +222,8 @@ export default function ExportPanel({
                     {excelData.length !== 1 ? "s" : ""} generated!
                   </p>
                   <p className="text-xs text-green-600 dark:text-green-500">
-                    Your ZIP file has been downloaded.
+                    Your {exportMode === "zip" ? "ZIP file" : "Single PDF"} has
+                    been downloaded.
                   </p>
                 </div>
               </div>

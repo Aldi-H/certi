@@ -49,13 +49,18 @@ export async function generateCertificates(
   excelData: Record<string, unknown>[],
   onProgress: (progress: GenerationProgress) => void,
   emailColumn?: string,
+  exportMode: "zip" | "pdf" = "zip",
 ): Promise<void> {
   const total = excelData.length;
   if (total === 0) throw new Error("No data rows to generate.");
 
   const zip = new JSZip();
+  let singlePdfDoc: PDFDocument | null = null;
+  const allEmails: string[] = [];
+  if (exportMode === "pdf") {
+    singlePdfDoc = await PDFDocument.create();
+  }
 
-  // Collect text objects that map to Excel columns
   const textObjects = canvas
     .getObjects()
     .filter(
@@ -69,7 +74,6 @@ export async function generateCertificates(
     );
   }
 
-  // Snapshot original placeholder text so we can restore later
   const originalTexts = new Map<string, string>();
   textObjects.forEach((obj) => {
     if (obj.customId) {
@@ -77,11 +81,9 @@ export async function generateCertificates(
     }
   });
 
-  // Deselect all objects to avoid selection controls appearing in export
   canvas.discardActiveObject();
   canvas.renderAll();
 
-  // Track filenames to avoid collisions
   const usedNames = new Set<string>();
 
   try {
@@ -94,7 +96,6 @@ export async function generateCertificates(
         status: `Generating certificate ${i + 1} of ${total}…`,
       });
 
-      // Replace placeholder text with real data for this row
       textObjects.forEach((obj) => {
         if (!obj.customId) return;
         const value = String(row[obj.customId] ?? "");
@@ -102,63 +103,94 @@ export async function generateCertificates(
       });
       canvas.renderAll();
 
-      // Capture canvas as high-resolution PNG
       const dataUrl = canvas.toDataURL({
         format: "png",
         multiplier: 2,
       });
       const pngBytes = dataUrlToUint8Array(dataUrl);
 
-      // Build a single-page PDF matching the image dimensions
-      const pdfDoc = await PDFDocument.create();
-      const pngImage = await pdfDoc.embedPng(pngBytes);
-      const page = pdfDoc.addPage([pngImage.width, pngImage.height]);
-      page.drawImage(pngImage, {
-        x: 0,
-        y: 0,
-        width: pngImage.width,
-        height: pngImage.height,
-      });
-
-      // Inject recipient email into PDF Keywords metadata for Phase 6 matching
+      let email = "";
       if (emailColumn) {
-        const email = String(row[emailColumn] ?? "").trim();
+        email = String(row[emailColumn] ?? "").trim();
+      } else {
+        const guess = Object.keys(row).find((k) =>
+          k.toLowerCase().includes("email"),
+        );
+        if (guess) email = String(row[guess] ?? "").trim();
+      }
+      allEmails.push(email);
+
+      if (exportMode === "zip") {
+        const pdfDoc = await PDFDocument.create();
+        const pngImage = await pdfDoc.embedPng(pngBytes);
+        const page = pdfDoc.addPage([pngImage.width, pngImage.height]);
+        page.drawImage(pngImage, {
+          x: 0,
+          y: 0,
+          width: pngImage.width,
+          height: pngImage.height,
+        });
+
+        // Inject recipient email into PDF Keywords metadata for Phase 6 matching
         if (email) {
           pdfDoc.setKeywords([email]);
         }
+
+        const pdfBytes = await pdfDoc.save();
+
+        const firstCol = Object.keys(row)[0];
+        const baseName =
+          sanitizeFilename(String(row[firstCol] ?? "")) ||
+          `Certificate_${i + 1}`;
+
+        // Handle duplicates
+        let finalName = baseName;
+        let counter = 2;
+        while (usedNames.has(finalName.toLowerCase())) {
+          finalName = `${baseName}_${counter}`;
+          counter++;
+        }
+        usedNames.add(finalName.toLowerCase());
+
+        zip.file(`${finalName}.pdf`, pdfBytes);
+      } else if (singlePdfDoc) {
+        const pngImage = await singlePdfDoc.embedPng(pngBytes);
+        const page = singlePdfDoc.addPage([pngImage.width, pngImage.height]);
+        page.drawImage(pngImage, {
+          x: 0,
+          y: 0,
+          width: pngImage.width,
+          height: pngImage.height,
+        });
       }
 
-      const pdfBytes = await pdfDoc.save();
-
-      // Build a unique filename from the first column value
-      const firstCol = Object.keys(row)[0];
-      const baseName =
-        sanitizeFilename(String(row[firstCol] ?? "")) || `Certificate_${i + 1}`;
-
-      // Handle duplicates
-      let finalName = baseName;
-      let counter = 2;
-      while (usedNames.has(finalName.toLowerCase())) {
-        finalName = `${baseName}_${counter}`;
-        counter++;
-      }
-      usedNames.add(finalName.toLowerCase());
-
-      zip.file(`${finalName}.pdf`, pdfBytes);
-
-      // Yield to the event loop so the progress UI can update
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
-    onProgress({
-      current: total,
-      total,
-      status: "Creating ZIP file…",
-    });
+    if (exportMode === "zip") {
+      onProgress({
+        current: total,
+        total,
+        status: "Creating ZIP file…",
+      });
 
-    // Generate and download the ZIP
-    const blob = await zip.generateAsync({ type: "blob" });
-    saveAs(blob, "certificates.zip");
+      // Generate and download the ZIP
+      const blob = await zip.generateAsync({ type: "blob" });
+      saveAs(blob, "certificates.zip");
+    } else if (singlePdfDoc) {
+      onProgress({
+        current: total,
+        total,
+        status: "Saving Single PDF…",
+      });
+
+      singlePdfDoc.setKeywords([allEmails.join(",")]);
+      const pdfBytes = await singlePdfDoc.save();
+      const blob = new Blob([pdfBytes as unknown as BlobPart], {
+        type: "application/pdf",
+      });
+      saveAs(blob, "certificates.pdf");
+    }
 
     onProgress({
       current: total,

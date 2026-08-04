@@ -93,6 +93,13 @@ export default function Toolbar({
 
   const [localFontSize, setLocalFontSize] = useState(toolbarState.fontSize);
   const [localColor, setLocalColor] = useState(toolbarState.fillColor);
+  const [prevSelectedId, setPrevSelectedId] = useState(selectedObjectId);
+
+  if (selectedObjectId !== prevSelectedId) {
+    setPrevSelectedId(selectedObjectId);
+    setLocalFontSize(toolbarState.fontSize);
+    setLocalColor(toolbarState.fillColor);
+  }
 
   const getActiveText = (): fabric.IText | null => {
     if (!canvas) return null;
